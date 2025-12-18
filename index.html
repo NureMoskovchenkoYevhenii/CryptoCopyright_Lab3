@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CryptoCopyright | Blockchain DRM</title>
+    <!-- Шрифт Inter з Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Web3.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.8.0/web3.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --success: #10b981;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+        }
+
+        /* Header Styles */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            background: linear-gradient(135deg, #4f46e5 0%, #9333ea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        header p {
+            color: var(--text-muted);
+            margin-top: 10px;
+            font-size: 1.1rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .step-badge {
+            display: inline-block;
+            background: #e0e7ff;
+            color: var(--primary);
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 0.05em;
+        }
+
+        h3 {
+            margin-top: 0;
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+        }
+
+        /* Input & Button Styles */
+        .file-upload-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        input[type="file"]:hover {
+            border-color: var(--primary);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+        }
+
+        button:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background-color: #d1d5db;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Status Messages */
+        .status-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            display: none; /* Hidden by default */
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-box.active {
+            display: flex;
+        }
+
+        .status-box.loading {
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #dbeafe;
+        }
+
+        .status-box.success {
+            background-color: #ecfdf5;
+            color: #047857;
+            border: 1px solid #d1fae5;
+        }
+
+        .status-box.error {
+            background-color: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fee2e2;
+        }
+
+        /* Hash Display */
+        .hash-container {
+            background: #f9fafb;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            word-break: break-all;
+            color: var(--text-muted);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 40px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Spinner Animation */
+        .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.75s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🛡️ CryptoCopyright</h1>
+        <p>Blockchain & AI Digital Rights Management System</p>
+    </header>
+
+    <div class="container">
+        
+        <!-- STEP 1 CARD -->
+        <div class="card">
+            <span class="step-badge">Step 1</span>
+            <h3>AI Verification (Machine Learning)</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">
+                Upload your content to check for plagiarism using Perceptual Hashing (pHash).
+            </p>
+            
+            <div class="file-upload-wrapper">
+                <input type="file" id="fileInput" accept="image/*">
+            </div>
+            
+            <button onclick="analyzeImage()" id="btnAnalyze">
+                Analyze Content
+            </button>
+
+            <!-- ML Status Area -->
+            <div id="mlStatusBox" class="status-box">
+                <div id="mlSpinner" class="spinner" style="display: none;"></div>
+                <span id="mlStatusText"></span>
+            </div>
+        </div>
+
+        <!-- STEP 2 CARD -->
+        <div class="card">
+            <span class="step-badge">Step 2</span>
+            <h3>Blockchain Registration</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">
+                Secure your unique content on the Ethereum network.
+            </p>
+            
+            <div class="hash-container">
+                <strong>pHash:</strong> <span id="hashDisplay">Waiting for analysis...</span>
+            </div>
+
+            <button id="btnRegister" onclick="registerInBlockchain()" disabled>
+                Register Rights with MetaMask
+            </button>
+
+            <!-- Blockchain Status Area -->
+            <div id="bcStatusBox" class="status-box">
+                <div id="bcSpinner" class="spinner" style="display: none;"></div>
+                <span id="bcStatusText"></span>
+            </div>
+        </div>
+
+    </div>
+
+    <footer>
+        Lab Work #3 | Developed by [Твоє Прізвище] | 2024
+    </footer>
+
+   <script>
+        // --- КОНФІГУРАЦІЯ ---
+        const CONTRACT_ADDRESS = "0x0Bc898d6cC1916E46Fc04D2Ba69d8De3B65d91f1"; 
+        
+        const CONTRACT_ABI = [
+            {
+                "inputs": [
+                    { "internalType": "string", "name": "_ipfsHash", "type": "string" },
+                    { "internalType": "string", "name": "_pHash", "type": "string" }
+                ],
+                "name": "registerContent",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ];
+
+        let currentPHash = "";
+        let web3;
+        let contract;
+
+        // --- ВИПРАВЛЕНІ ФУНКЦІЇ UI (ТУТ БУЛА ПОМИЛКА) ---
+        function setStatus(elementId, type, message, isLoading = false) {
+            // Тепер імена точно збігаються з HTML
+            const box = document.getElementById(elementId + 'StatusBox'); 
+            const text = document.getElementById(elementId + 'StatusText');
+            const spinner = document.getElementById(elementId + 'Spinner');
+
+            if (!box || !text) {
+                console.error("Elements not found:", elementId);
+                return;
+            }
+
+            box.className = `status-box active ${type}`;
+            text.innerText = message;
+            
+            if (isLoading && spinner) {
+                spinner.style.display = 'block';
+            } else if (spinner) {
+                spinner.style.display = 'none';
+            }
+        }
+
+        function clearStatus(elementId) {
+            const box = document.getElementById(elementId + 'StatusBox');
+            if(box) box.className = 'status-box';
+        }
+
+        // --- ЛОГІКА ---
+
+        async function initWeb3() {
+            if (window.ethereum) {
+                web3 = new Web3(window.ethereum);
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    contract = new web3.eth.Contract(CONTRACT_ABI, CONTRACT_ADDRESS);
+                } catch (error) {
+                    console.error("User denied account access");
+                }
+            } else {
+                alert("Please install MetaMask!");
+            }
+        }
+
+        async function analyzeImage() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert("Please select a file first!");
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // UI: Loading
+            clearStatus('ml');
+            setStatus('ml', 'loading', 'Analyzing image structure...', true);
+            document.getElementById('btnAnalyze').disabled = true;
+            
+            try {
+                // Переконайся, що Python сервер запущено!
+                const response = await fetch('http://127.0.0.1:5000/analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                document.getElementById('btnAnalyze').disabled = false;
+
+                if (data.success) {
+                    // UI: Success
+                    setStatus('ml', 'success', data.message);
+                    document.getElementById('hashDisplay').innerText = data.pHash;
+                    document.getElementById('hashDisplay').style.color = '#4f46e5';
+                    document.getElementById('hashDisplay').style.fontWeight = 'bold';
+                    
+                    currentPHash = data.pHash;
+                    document.getElementById('btnRegister').disabled = false; 
+                } else {
+                    // UI: Error (Plagiarism)
+                    setStatus('ml', 'error', data.message);
+                    document.getElementById('hashDisplay').innerText = data.pHash;
+                    document.getElementById('btnRegister').disabled = true;
+                }
+            } catch (e) {
+                console.error(e);
+                setStatus('ml', 'error', "Error connecting to ML Server. Is app.py running?");
+                document.getElementById('btnAnalyze').disabled = false;
+            }
+        }
+
+        async function registerInBlockchain() {
+            if (!web3) await initWeb3();
+            
+            const accounts = await web3.eth.getAccounts();
+            const fakeIpfs = "QmTestData" + Date.now(); 
+
+            // UI: Loading
+            clearStatus('bc');
+            setStatus('bc', 'loading', 'Waiting for MetaMask signature...', true);
+            document.getElementById('btnRegister').disabled = true;
+
+            try {
+                await contract.methods.registerContent(fakeIpfs, currentPHash)
+                    .send({ from: accounts[0] });
+                
+                // UI: Success
+                setStatus('bc', 'success', "✅ Success! Transaction Mined & Rights Secured.");
+                document.getElementById('btnRegister').disabled = false;
+            } catch (e) {
+                console.error(e);
+                let errorMsg = e.message;
+                if(errorMsg.includes("User denied")) errorMsg = "Transaction rejected by user.";
+                
+                setStatus('bc', 'error', "❌ Failed: " + errorMsg);
+                document.getElementById('btnRegister').disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
